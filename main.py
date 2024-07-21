@@ -92,10 +92,6 @@ def plot(data : list[tuple[str, float]], title : str, path : str):
 
     dates = [datetime.strptime(date, '%Y-%m-%d') for date, _ in data]
     values = [value for _, value in data]
-    
-    # Extract dates and values from the data
-    dates = [datetime.strptime(date, '%Y-%m-%d') for date, _ in hi]
-    values = [value for _, value in hi]
 
     # Create the plot
     plt.figure(figsize=(12, 6))
