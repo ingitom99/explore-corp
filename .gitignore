@@ -13,3 +13,6 @@ venv/
 # Ignore Chroma persistence directory
 chromas/
 
+data/
+
+plots/
