@@ -30,27 +30,17 @@ def get_cik_ticker_map(user_agent_string : str) -> dict:
         return cik_map
     else:
         print(f"Failed to download CIK mapping. Status code: {response.status_code}")
-        return 
+        return None
         
 def get_cik_from_ticker(ticker : str, cik_map : dict) -> str:
     ticker = ticker.lower()
     return cik_map[ticker]
 
-def get_dict(path : str):
-    with open(path, 'r') as file:
-        my_dict = json.load(file)
-    return my_dict
-
-def save_dict(my_dict : dict, path : str):
-    with open(path, 'w') as file:
-        json.dump(my_dict, file)
-
-
-def get_data_by_tag(user_agent_string : str, cik : str, tag : str, taxonomy : str = "us-gaap") -> dict:
+def get_raw_data(user_agent_string : str, cik : str) -> dict:
     headers = {
         'User-Agent': user_agent_string
     }
-    url = f'https://data.sec.gov/api/xbrl/companyconcept/CIK{cik}/{taxonomy}/{tag}.json'
+    url = f'https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json'
     response = requests.get(url, headers=headers, timeout=10)
     if response.status_code == 200:
         data = response.json()
@@ -59,30 +49,42 @@ def get_data_by_tag(user_agent_string : str, cik : str, tag : str, taxonomy : st
         print(f"Error: {response.status_code}")
         return None
 
-def get_company_data(
-    user_agent_string : str,
-    cik : str,
-    tags_dict : str,
-    taxonomy : str = "us-gaap"
-    ):
+def get_taxonomies(company_data : dict):
+    return list(company_data['facts'].keys())
 
-    historical_data = {}
+def get_tags(company_data : dict):
 
-    for key in tqdm(tags_dict.keys(), desc="Getting data by tag"):
+    taxonomies = get_taxonomies(company_data)
+    all_tags = {}
+    for taxonomy in taxonomies:
+        all_tags[taxonomy] = list(company_data['facts'][taxonomy].keys())
 
-        data = get_data_by_tag(
-            user_agent_string,
-            cik,
-            key,
-            taxonomy
-        )
+    return all_tags
 
-        historical_data[key] = data
-    
-    return historical_data
+def get_data_by_tag(company_data : dict, tag : str, taxonomy : str):
 
-def organize_by_tag(data_obj : dict, tag : str):
-    data = []
-    for item in data_obj[tag]['units']['USD']:
-        data.append((item['end'], item['val']))
-    return data
+    concept = {}
+    concept['tag'] = tag
+    concept['taxonomy'] = taxonomy
+    concept['label'] = company_data['facts'][taxonomy][tag]['label']
+    concept['description'] = company_data['facts'][taxonomy][tag]['description']
+    concept['filings'] = []
+    for unit in company_data['facts'][taxonomy][tag]['units'].keys():
+        for filing in company_data['facts'][taxonomy][tag]['units'][unit]:
+            concept['filings'].append({
+                'unit': unit,
+                'value': filing['val'],
+                'fiscal_year': filing['fy'],
+                'fiscal_period': filing['fp'],
+                'form_type': filing['form'],
+                'date_filed': filing['filed']
+            })
+    return concept
+
+def get_all_data(company_data : dict, all_tags : dict):
+    facts = {}
+    for taxonomy, tags_list in all_tags.items():
+        for tag in tags_list:
+            fact = get_data_by_tag(company_data, tag, taxonomy)
+            facts[tag] = fact
+    return facts

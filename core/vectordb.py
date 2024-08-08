@@ -1,20 +1,20 @@
-from langchain.docstore.document import Document
 from uuid import uuid4
-from langchain_openai import OpenAIEmbeddings
-from langchain_mistralai import MistralAIEmbeddings
-from langchain_chroma import Chroma
 
 from dotenv import load_dotenv
-import os
+
+from langchain.docstore.document import Document
+from langchain_openai import OpenAIEmbeddings
+from langchain_chroma import Chroma
+
 
 # Load environment variables
 load_dotenv()
 
-def build_db(
+def build_vdb(
     data : dict,
-    ticker : str,
-    source : str = "sec_filings"
-    ):
+    company_name : str,
+    info_source : str
+    ) -> Chroma:
 
     documents = []
     for key, value in data.items():
@@ -22,22 +22,23 @@ def build_db(
         content = str(value)
         # Create a Document object
         doc = Document(page_content=content, id=key, metadata={
-            "source": source,
-            "ticker": ticker,
+            "source": info_source,
+            "company": company_name,
             "tag": key
             })
         documents.append(doc)
 
     embedding_func = OpenAIEmbeddings(model="text-embedding-3-large")
     vector_store = Chroma(
-        collection_name=ticker + "_" + source,
+        collection_name=company_name + "_" + info_source,
         embedding_function=embedding_func,
-        persist_directory="./chromas/" + ticker + "_" + source,  
+        persist_directory="./chromas/" + company_name + "_" + info_source  
     )
 
-    
     uuids = [str(uuid4()) for _ in range(len(documents))]
-
     vector_store.add_documents(documents=documents, ids=uuids)
 
     return vector_store
+
+def load_vdb(persist_directory : str) -> Chroma:
+    

@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+import datetime
+
 def plot(data : list[tuple[str, float]], title : str, path : str):
 
     dates = [datetime.strptime(date, '%Y-%m-%d') for date, _ in data]

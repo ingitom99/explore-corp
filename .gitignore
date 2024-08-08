@@ -13,6 +13,8 @@ venv/
 # Ignore Chroma persistence directory
 chromas/
 
+# Ignore data
 data/
 
+# Ignore plots
 plots/
