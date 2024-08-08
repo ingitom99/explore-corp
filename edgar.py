@@ -1,11 +1,9 @@
-import requests
-import pandas as pd
-from bs4 import BeautifulSoup
-import time
 import json
+from datetime import datetime
+import requests
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from datetime import datetime
+
 
 def get_user_agent_string(first_name : str, last_name : str, email : str) -> str:
     return f'{first_name} {last_name} ({email})'
@@ -76,13 +74,14 @@ def get_company_data(
             user_agent_string,
             cik,
             key,
+            taxonomy
         )
 
         historical_data[key] = data
     
     return historical_data
 
-def get_data_by_tag(data_obj : dict, tag : str):
+def organize_by_tag(data_obj : dict, tag : str):
     data = []
     for item in data_obj[tag]['units']['USD']:
         data.append((item['end'], item['val']))
@@ -111,3 +110,4 @@ def plot(data : list[tuple[str, float]], title : str, path : str):
 
     # Display the plot
     plt.savefig(path)
+

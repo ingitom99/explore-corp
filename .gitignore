@@ -8,3 +8,8 @@ __pycache__/
 venv/
 
 # Ignore environment variables file
+.env
+
+# Ignore Chroma persistence directory
+chromas/
+
